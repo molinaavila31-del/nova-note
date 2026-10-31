@@ -285,7 +285,7 @@
             box-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
         }
 
-        /* Barra lateral inteligente */
+        /* Barra lateral inteligente (Versión in-app web) */
         .quick-edge-tab {
             position: fixed;
             right: 0;
@@ -467,7 +467,7 @@
 </head>
 <body>
 
-    <!-- Barra lateral inteligente -->
+    <!-- Barra lateral inteligente (Web Fallback) -->
     <div id="quick-edge-bar" class="quick-edge-tab status-normal" onclick="openQuickSheet()" title="Acceso Rápido"></div>
 
     <div class="app-container">
@@ -511,7 +511,7 @@
             </div>
 
             <div class="calendar-box">
-                <h3 id="calendar-month-title" style="color: var(--neon-cyan); font-size: 15px; text-align: center; margin-bottom: 8px;">Octubre 2026</h3>
+                <h3 id="calendar-month-title" style="color: var(--neon-cyan); font-size: 15px; text-align: center; margin-bottom: 8px;"></h3>
                 <div class="calendar-grid">
                     <div class="cal-day-header">Lun</div>
                     <div class="cal-day-header">Mar</div>
@@ -624,10 +624,10 @@
             <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
                 <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid var(--border-cyber);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 13px; font-weight: bold;">Barra lateral flotante global</span>
+                        <span style="font-size: 13px; font-weight: bold;">Barra lateral nativa global</span>
                         <input type="checkbox" id="toggle-edge-bar" checked onchange="toggleEdgeBarSetting()" style="width: 20px; height: 20px; accent-color: var(--neon-cyan);">
                     </div>
-                    <p style="font-size: 11px; color: var(--text-muted);">Permite mantener la barra de acceso rápido activa en los bordes de la interfaz. (Nota: Para superposición flotante sobre apps externas del sistema operativo Android, requiere permisos nativos de capa superior).</p>
+                    <p style="font-size: 11px; color: var(--text-muted);">Habilita el botón flotante usando SYSTEM_ALERT_WINDOW sobre el sistema Android.</p>
                 </div>
             </div>
         </div>
@@ -638,7 +638,7 @@
         let currentTypeFilter = 'TODOS';
         let selectedSheetType = 'TEXTO';
         let selectedSheetFolder = 'Raíz';
-        let selectedCalendarDate = new Date().toISOString().split('T')[0];
+        let selectedCalendarDate = null;
         let edgeBarEnabled = true;
 
         const defaultNotes = [
@@ -657,6 +657,10 @@
             }
             updateEdgeBarVisibility();
             refreshAllData();
+            
+            // Set today as default calendar selection
+            const today = new Date();
+            selectedCalendarDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         });
 
         function switchTab(tabName, event) {
@@ -707,13 +711,28 @@
             if (event.target.id === 'settings-overlay') document.getElementById('settings-overlay').classList.remove('open');
         }
 
-        function toggleEdgeBarSetting() {
+        // Lógica actualizada para el plugin nativo del Botón Flotante Global
+        async function toggleEdgeBarSetting() {
             edgeBarEnabled = document.getElementById('toggle-edge-bar').checked;
             localStorage.setItem('nova_edge_bar', edgeBarEnabled);
             updateEdgeBarVisibility();
+
+            // Interacción simulada con el futuro plugin en Android
+            if (window.Capacitor && window.Capacitor.Plugins.FloatingButtonPlugin) {
+                try {
+                    if (edgeBarEnabled) {
+                        await window.Capacitor.Plugins.FloatingButtonPlugin.showOverlay();
+                    } else {
+                        await window.Capacitor.Plugins.FloatingButtonPlugin.hideOverlay();
+                    }
+                } catch (error) {
+                    console.error("Error al comunicar con la capa nativa", error);
+                }
+            }
         }
 
         function updateEdgeBarVisibility() {
+            // El fallback web solo se muestra dentro del webview
             document.getElementById('quick-edge-bar').style.display = edgeBarEnabled ? 'block' : 'none';
         }
 
@@ -781,6 +800,10 @@
         }
 
         function saveCalendarReminder() {
+            if (!selectedCalendarDate) {
+                alert("Por favor selecciona un día futuro o actual primero.");
+                return;
+            }
             const title = document.getElementById('cal-note-title').value.trim();
             const content = document.getElementById('cal-note-content').value.trim();
             if (!title && !content) return;
@@ -894,6 +917,7 @@
                 localStorage.setItem('nova_trash_db', JSON.stringify(trash));
                 refreshAllData();
                 renderTrashView();
+                if(document.getElementById('section-calendar').classList.contains('active')) renderCalendar();
             }
         }
 
@@ -951,49 +975,101 @@
             renderTrashView();
         }
 
-        // Función para renderizar los días del mes en el calendario
-function renderCalendar(year, month) {
-    const calendarGrid = document.getElementById('calendar-grid'); // O tu contenedor de días
-    calendarGrid.innerHTML = '';
+        // --- LÓGICA DE CALENDARIO CORREGIDA ---
+        function renderCalendar(year, month) {
+            const now = new Date();
+            year = year || now.getFullYear();
+            month = month !== undefined ? month : now.getMonth();
 
-    // Obtener la fecha actual normalizada a las 00:00:00 para comparar solo días
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('calendar-month-title').textContent = `${monthNames[month]} ${year}`;
 
-    // Supongamos que tienes un bucle que recorre los días del mes o los genera:
-    // const totalDays = ... (días del mes actual)
-    
-    for (let day = 1; day <= totalDays; day++) {
-        const currentDate = new Date(year, month, day);
-        currentDate.setHours(0, 0, 0, 0);
+            const calendarGrid = document.getElementById('calendar-days-grid');
+            calendarGrid.innerHTML = '';
 
-        const dayElement = document.createElement('div');
-        dayElement.classList.add('calendar-day');
-        dayElement.textContent = day;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-        // VERIFICAR SI EL DÍA YA PASÓ
-        if (currentDate < today) {
-            // Día pasado: se deshabilita visualmente y no permite clics
-            dayElement.classList.add('disabled-day');
-            dayElement.style.opacity = '0.4';
-            dayElement.style.pointerEvents = 'none';
-        } else {
-            // Día actual o futuro: habilitado para agregar notas o recordatorios
-            dayElement.classList.add('active-day');
-            dayElement.addEventListener('click', () => {
-                selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                // Aquí activas la vista para añadir el recordatorio en esa fecha
-                onSelectFutureDate(selectedDate);
-            });
+            // Calcular días totales del mes y el desplazamiento inicial (para que inicie el día correcto de la semana)
+            const firstDay = new Date(year, month, 1).getDay();
+            const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Convertir Domingo (0) al final de la semana
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+
+            // Celdas vacías previas
+            for (let i = 0; i < startOffset; i++) {
+                const emptyCell = document.createElement('div');
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // Días del mes
+            for (let day = 1; day <= totalDays; day++) {
+                const currentDate = new Date(year, month, day);
+                currentDate.setHours(0, 0, 0, 0);
+
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const hasEvent = notes.some(n => n.reminderDate === dateStr);
+
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('cal-day');
+                dayElement.textContent = day;
+
+                if (hasEvent) {
+                    dayElement.classList.add('has-event');
+                }
+
+                if (currentDate < today) {
+                    // Días pasados deshabilitados
+                    dayElement.style.opacity = '0.4';
+                    dayElement.style.pointerEvents = 'none';
+                } else {
+                    // Días futuros habilitados
+                    dayElement.addEventListener('click', () => {
+                        selectedCalendarDate = dateStr;
+                        renderCalendar(year, month);
+                    });
+                    
+                    if (selectedCalendarDate === dateStr) {
+                        dayElement.classList.add('selected');
+                    }
+                }
+                calendarGrid.appendChild(dayElement);
+            }
+
+            document.getElementById('selected-date-label').textContent = selectedCalendarDate ? `📅 Recordatorio para: ${selectedCalendarDate}` : 'Selecciona un día';
+            renderCalendarEvents();
         }
 
-			calendarGrid.appendChild(dayElement);
-		}
-	}
+        function renderCalendarEvents() {
+            const feed = document.getElementById('calendar-events-feed');
+            if (!selectedCalendarDate) {
+                feed.innerHTML = '';
+                return;
+            }
 
-        function selectCalendarDate(dateStr) {
-            selectedCalendarDate = dateStr;
-            renderCalendar();
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            const dailyEvents = notes.filter(n => n.reminderDate === selectedCalendarDate);
+
+            if (dailyEvents.length === 0) {
+                feed.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; text-align: center;">Sin eventos programados para este día.</p>';
+                return;
+            }
+
+            feed.innerHTML = dailyEvents.map(note => `
+                <div class="note-card" style="border-color: var(--neon-green);">
+                    <div class="note-meta-row">
+                        <span style="font-size:10px; color:var(--neon-green); font-weight:bold;">⏰ PROGRAMADO</span>
+                        <span class="tag-folder">${note.folder}</span>
+                    </div>
+                    <h3>${escapeHtml(note.title)}</h3>
+                    <p>${escapeHtml(note.content)}</p>
+                    <div class="note-footer-row">
+                        <div class="action-btns">
+                            <button class="delete-note-btn" onclick="moveToTrash(${note.id})">❌ Cancelar Evento</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function renderFoldersView() {
