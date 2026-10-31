@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -14,32 +14,25 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Recreate Environment and Build APK
         run: |
-          # Si no existe el package.json, lo inicializamos automáticamente
           if [ ! -f package.json ]; then
             npm init -y
           fi
           
-          # Instalamos las dependencias y Capacitor
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          
-          # Configuramos el proyecto móvil apuntando a la raíz donde está tu index.html
           npx cap init NovaNote com.novanote.app --web-dir . --yes || true
-          
-          # Añadimos la plataforma Android y sincronizamos los archivos
           npx cap add android
           npx cap sync android
 
-          # Compilamos el APK usando Gradle
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
