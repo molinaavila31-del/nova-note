@@ -1,0 +1,23 @@
+{
+  "short_name": "Nova Note",
+  "name": "Nova Note - Cyberpunk Fast Notes & Time Management",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#030712",
+  "theme_color": "#00E5FF",
+  "display": "standalone",
+  "orientation": "portrait"
+}
