@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nova Note - Quantum Core Pro</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="assets/nombre de tu icono exterior.jpg">
+    <link rel="icon" href="assets/icon.png">
     <style>
         :root {
             --bg-base: #030712;
@@ -285,18 +285,23 @@
             box-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
         }
 
-        /* Barra lateral inteligente (Versión in-app web) */
+        /* Barra lateral inteligente */
         .quick-edge-tab {
             position: fixed;
             right: 0;
             top: 45%;
-            width: 8px;
-            height: 60px;
-            border-radius: 4px 0 0 4px;
+            width: 20px;
+            height: 70px;
+            border-radius: 6px 0 0 6px;
             cursor: pointer;
             z-index: 105;
-            transition: background 0.3s, box-shadow 0.3s;
+            transition: background 0.3s, box-shadow 0.3s, width 0.2s;
         }
+
+        .quick-edge-tab:active {
+            width: 28px;
+        }
+        
         .quick-edge-tab.status-pending {
             background: var(--neon-green);
             box-shadow: 0 0 12px var(--neon-green);
@@ -467,7 +472,7 @@
 </head>
 <body>
 
-    <!-- Barra lateral inteligente (Web Fallback) -->
+    <!-- Barra lateral inteligente -->
     <div id="quick-edge-bar" class="quick-edge-tab status-normal" onclick="openQuickSheet()" title="Acceso Rápido"></div>
 
     <div class="app-container">
@@ -476,7 +481,7 @@
         <div id="section-notes" class="view-section active">
             <div class="hud-header">
                 <div class="hud-brand">
-                    <img src="assets/nombre_de_tu_icono_interior.jpg" alt="Logo">
+                    <img src="assets/icon.png" alt="Logo">
                     <span>Nova Notes</span>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
@@ -511,7 +516,11 @@
             </div>
 
             <div class="calendar-box">
-                <h3 id="calendar-month-title" style="color: var(--neon-cyan); font-size: 15px; text-align: center; margin-bottom: 8px;"></h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <button onclick="changeMonth(-1)" style="background:none; border:none; color:var(--neon-cyan); font-size:18px; cursor:pointer; padding: 0 10px;">◄</button>
+                    <h3 id="calendar-month-title" style="color: var(--neon-cyan); font-size: 15px; margin: 0;"></h3>
+                    <button onclick="changeMonth(1)" style="background:none; border:none; color:var(--neon-cyan); font-size:18px; cursor:pointer; padding: 0 10px;">►</button>
+                </div>
                 <div class="calendar-grid">
                     <div class="cal-day-header">Lun</div>
                     <div class="cal-day-header">Mar</div>
@@ -641,6 +650,10 @@
         let selectedCalendarDate = null;
         let edgeBarEnabled = true;
 
+        // Variables de paginación del calendario
+        let viewYear = new Date().getFullYear();
+        let viewMonth = new Date().getMonth();
+
         const defaultNotes = [
             { id: 1, title: "Bienvenido a Nova Note", content: "Centro de comando cyberpunk configurado correctamente.", type: "TEXTO", folder: "Cyber Ops", date: "31/10/2026", reminderDate: null }
         ];
@@ -658,7 +671,6 @@
             updateEdgeBarVisibility();
             refreshAllData();
             
-            // Set today as default calendar selection
             const today = new Date();
             selectedCalendarDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         });
@@ -711,13 +723,11 @@
             if (event.target.id === 'settings-overlay') document.getElementById('settings-overlay').classList.remove('open');
         }
 
-        // Lógica actualizada para el plugin nativo del Botón Flotante Global
         async function toggleEdgeBarSetting() {
             edgeBarEnabled = document.getElementById('toggle-edge-bar').checked;
             localStorage.setItem('nova_edge_bar', edgeBarEnabled);
             updateEdgeBarVisibility();
 
-            // Interacción simulada con el futuro plugin en Android
             if (window.Capacitor && window.Capacitor.Plugins.FloatingButtonPlugin) {
                 try {
                     if (edgeBarEnabled) {
@@ -732,7 +742,6 @@
         }
 
         function updateEdgeBarVisibility() {
-            // El fallback web solo se muestra dentro del webview
             document.getElementById('quick-edge-bar').style.display = edgeBarEnabled ? 'block' : 'none';
         }
 
@@ -975,14 +984,21 @@
             renderTrashView();
         }
 
-        // --- LÓGICA DE CALENDARIO CORREGIDA ---
-        function renderCalendar(year, month) {
-            const now = new Date();
-            year = year || now.getFullYear();
-            month = month !== undefined ? month : now.getMonth();
+        function changeMonth(offset) {
+            viewMonth += offset;
+            if (viewMonth < 0) {
+                viewMonth = 11;
+                viewYear--;
+            } else if (viewMonth > 11) {
+                viewMonth = 0;
+                viewYear++;
+            }
+            renderCalendar();
+        }
 
+        function renderCalendar() {
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            document.getElementById('calendar-month-title').textContent = `${monthNames[month]} ${year}`;
+            document.getElementById('calendar-month-title').textContent = `${monthNames[viewMonth]} ${viewYear}`;
 
             const calendarGrid = document.getElementById('calendar-days-grid');
             calendarGrid.innerHTML = '';
@@ -990,43 +1006,35 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Calcular días totales del mes y el desplazamiento inicial (para que inicie el día correcto de la semana)
-            const firstDay = new Date(year, month, 1).getDay();
-            const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Convertir Domingo (0) al final de la semana
-            const totalDays = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+            const startOffset = firstDay === 0 ? 6 : firstDay - 1; 
+            const totalDays = new Date(viewYear, viewMonth + 1, 0).getDate();
             const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
 
-            // Celdas vacías previas
             for (let i = 0; i < startOffset; i++) {
-                const emptyCell = document.createElement('div');
-                calendarGrid.appendChild(emptyCell);
+                calendarGrid.appendChild(document.createElement('div'));
             }
 
-            // Días del mes
             for (let day = 1; day <= totalDays; day++) {
-                const currentDate = new Date(year, month, day);
+                const currentDate = new Date(viewYear, viewMonth, day);
                 currentDate.setHours(0, 0, 0, 0);
 
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const hasEvent = notes.some(n => n.reminderDate === dateStr);
 
                 const dayElement = document.createElement('div');
                 dayElement.classList.add('cal-day');
                 dayElement.textContent = day;
 
-                if (hasEvent) {
-                    dayElement.classList.add('has-event');
-                }
+                if (hasEvent) dayElement.classList.add('has-event');
 
                 if (currentDate < today) {
-                    // Días pasados deshabilitados
                     dayElement.style.opacity = '0.4';
                     dayElement.style.pointerEvents = 'none';
                 } else {
-                    // Días futuros habilitados
                     dayElement.addEventListener('click', () => {
                         selectedCalendarDate = dateStr;
-                        renderCalendar(year, month);
+                        renderCalendar(); 
                     });
                     
                     if (selectedCalendarDate === dateStr) {

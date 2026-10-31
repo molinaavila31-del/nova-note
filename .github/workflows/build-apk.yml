@@ -58,29 +58,20 @@ jobs:
           fi
 
           # 3. Sustituir automáticamente los iconos genéricos por tu icono exterior de assets
-          ICON_SOURCE=""
           if [ -f "assets/icon.png" ]; then
-            ICON_SOURCE="assets/icon.png"
-          elif [ -f "assets/icon.jpg" ]; then
-            ICON_SOURCE="assets/icon.jpg"
-          elif [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
-            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
-          elif [ -f "assets/nombre_de_tu_icono_exterior.jpg" ]; then
-            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.jpg"
-          fi
-
-          if [ -n "$ICON_SOURCE" ]; then
-            echo "Copiando icono personalizado desde $ICON_SOURCE..."
+            echo "Copiando icono personalizado desde assets/icon.png..."
             RES_DIR="android/app/src/main/res"
             for d in mipmap-hdpi mipmap-mdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
               mkdir -p "$RES_DIR/$d"
-              cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher.png" 2>/dev/null || cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher.jpg" 2>/dev/null || true
-              cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher_round.png" 2>/dev/null || cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher_round.jpg" 2>/dev/null || true
+              cp "assets/icon.png" "$RES_DIR/$d/ic_launcher.png" 2>/dev/null || true
+              cp "assets/icon.png" "$RES_DIR/$d/ic_launcher_round.png" 2>/dev/null || true
             done
           fi
 
-          # 4. Modificar MainActivity.java para solicitar permisos en tiempo de ejecución
+          # 4. Modificar MainActivity y crear Plugin de Botón Flotante Arrastrable
           MAIN_ACTIVITY="android/app/src/main/java/com/novanote/app/MainActivity.java"
+          PLUGIN_FILE="android/app/src/main/java/com/novanote/app/FloatingButtonPlugin.java"
+          
           if [ -f "$MAIN_ACTIVITY" ]; then
             cat << 'EOF' > "$MAIN_ACTIVITY"
           package com.novanote.app;
@@ -99,8 +90,9 @@ jobs:
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+                  
+                  registerPlugin(FloatingButtonPlugin.class);
 
-                  // Solicitar permiso de superposición flotante (Aparecer encima)
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                       if (!Settings.canDrawOverlays(this)) {
                           Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -109,7 +101,6 @@ jobs:
                       }
                   }
 
-                  // Solicitar permisos de notificaciones para el calendario en Android 13+
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                       if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                           ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
@@ -119,6 +110,117 @@ jobs:
           }
           EOF
           fi
+          
+          cat << 'EOF' > "$PLUGIN_FILE"
+          package com.novanote.app;
+
+          import android.annotation.SuppressLint;
+          import android.content.Context;
+          import android.content.Intent;
+          import android.graphics.Color;
+          import android.graphics.PixelFormat;
+          import android.os.Build;
+          import android.view.Gravity;
+          import android.view.MotionEvent;
+          import android.view.View;
+          import android.view.WindowManager;
+          import android.widget.Button;
+
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "FloatingButtonPlugin")
+          public class FloatingButtonPlugin extends Plugin {
+              private WindowManager windowManager;
+              private Button floatingButton;
+
+              @PluginMethod
+              public void showOverlay(PluginCall call) {
+                  getActivity().runOnUiThread(() -> {
+                      if (floatingButton != null) {
+                          call.resolve();
+                          return;
+                      }
+
+                      windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+                      floatingButton = new Button(getContext());
+                      floatingButton.setText("+");
+                      floatingButton.setBackgroundColor(Color.parseColor("#22d3ee"));
+                      floatingButton.setTextColor(Color.parseColor("#030712"));
+
+                      int layoutFlag;
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                          layoutFlag = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+                      } else {
+                          layoutFlag = WindowManager.LayoutParams.TYPE_PHONE;
+                      }
+
+                      WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                              120,
+                              120,
+                              layoutFlag,
+                              WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                              PixelFormat.TRANSLUCENT
+                      );
+
+                      params.gravity = Gravity.TOP | Gravity.LEFT;
+                      params.x = 0;
+                      params.y = 100;
+
+                      floatingButton.setOnTouchListener(new View.OnTouchListener() {
+                          private int initialX;
+                          private int initialY;
+                          private float initialTouchX;
+                          private float initialTouchY;
+
+                          @SuppressLint("ClickableViewAccessibility")
+                          @Override
+                          public boolean onTouch(View v, MotionEvent event) {
+                              switch (event.getAction()) {
+                                  case MotionEvent.ACTION_DOWN:
+                                      initialX = params.x;
+                                      initialY = params.y;
+                                      initialTouchX = event.getRawX();
+                                      initialTouchY = event.getRawY();
+                                      return true;
+                                  case MotionEvent.ACTION_MOVE:
+                                      params.x = initialX + (int) (event.getRawX() - initialTouchX);
+                                      params.y = initialY + (int) (event.getRawY() - initialTouchY);
+                                      windowManager.updateViewLayout(floatingButton, params);
+                                      return true;
+                                  case MotionEvent.ACTION_UP:
+                                      int diffX = (int) (event.getRawX() - initialTouchX);
+                                      int diffY = (int) (event.getRawY() - initialTouchY);
+                                      if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
+                                          Intent intent = new Intent(getContext(), MainActivity.class);
+                                          intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                          getContext().startActivity(intent);
+                                      }
+                                      return true;
+                              }
+                              return false;
+                          }
+                      });
+
+                      windowManager.addView(floatingButton, params);
+                      call.resolve();
+                  });
+              }
+
+              @PluginMethod
+              public void hideOverlay(PluginCall call) {
+                  getActivity().runOnUiThread(() -> {
+                      if (floatingButton != null && windowManager != null) {
+                          windowManager.removeView(floatingButton);
+                          floatingButton = null;
+                      }
+                      call.resolve();
+                  });
+              }
+          }
+          EOF
 
           cd android
           chmod +x gradlew
