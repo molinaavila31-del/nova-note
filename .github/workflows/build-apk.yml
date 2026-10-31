@@ -22,14 +22,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Recreate Environment and Build APK
+      - name: Build APK with Capacitor and Gradle
         run: |
-          if [ ! -f package.json ]; then
-            npm init -y
-          fi
-          
+          npm install
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init NovaNote com.novanote.app --web-dir . --yes || true
           npx cap add android
           npx cap sync android
 

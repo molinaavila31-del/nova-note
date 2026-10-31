@@ -1,0 +1,6 @@
+{
+  "appId": "com.novanote.app",
+  "appName": "Nova Note",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
