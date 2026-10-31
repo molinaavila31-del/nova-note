@@ -22,6 +22,15 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Prepare web assets directory
+        run: |
+          mkdir -p dist
+          # Copiamos el index.html, manifest e iconos dentro de la carpeta dist que exige Capacitor
+          cp index.html manifest.json dist/ 2>/dev/null || true
+          if [ -d "assets" ]; then
+            cp -r assets dist/
+          fi
+
       - name: Build APK with Capacitor and Gradle
         run: |
           npm install
