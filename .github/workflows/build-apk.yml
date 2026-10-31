@@ -47,6 +47,42 @@ jobs:
               }
           }" >> android/app/build.gradle
 
+          # Inyectar automáticamente el permiso SYSTEM_ALERT_WINDOW en el AndroidManifest.xml
+          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST_PATH" ]; then
+            sed -i '/<application/i \    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />' "$MANIFEST_PATH"
+          fi
+
+          # Modificar el MainActivity.java automáticamente para solicitar el permiso en Android
+          MAIN_ACTIVITY="android/app/src/main/java/com/novanote/app/MainActivity.java"
+          if [ -f "$MAIN_ACTIVITY" ]; then
+            cat << 'EOF' > "$MAIN_ACTIVITY"
+          package com.novanote.app;
+
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.provider.Settings;
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                      if (!Settings.canDrawOverlays(this)) {
+                          Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                  Uri.parse("package:" + getPackageName()));
+                          startActivity(intent);
+                      }
+                  }
+              }
+          }
+          EOF
+          fi
+
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug

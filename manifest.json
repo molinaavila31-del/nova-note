@@ -1,9 +1,14 @@
 {
   "name": "Nova Note",
+  "short_name": "NovaNote",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#22d3ee",
   "icons": [
     {
       "src": "assets/nombre_de_tu_icono_exterior.png",
-      "sizes": "192x192",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
