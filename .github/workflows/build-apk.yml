@@ -37,13 +37,14 @@ jobs:
           npx cap add android
           npx cap sync android
 
-          # 1. Solución para evitar el conflicto de clases duplicadas de Kotlin
+          # 1. Solución robusta para evitar conflictos de versiones duplicadas de Kotlin
           echo "
           configurations.all {
               resolutionStrategy {
                   force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.8.22'
                   force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
-                  force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
               }
           }" >> android/app/build.gradle
 
@@ -58,12 +59,14 @@ jobs:
 
           # 3. Sustituir automáticamente los iconos genéricos por tu icono exterior de assets
           ICON_SOURCE=""
-          if [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
-            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
+          if [ -f "assets/icon.png" ]; then
+            ICON_SOURCE="assets/icon.png"
+          elif [ -f "assets/icon.jpg" ]; then
+            ICON_SOURCE="assets/icon.jpg"
           elif [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
             ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
-          elif [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
-            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
+          elif [ -f "assets/nombre_de_tu_icono_exterior.jpg" ]; then
+            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.jpg"
           fi
 
           if [ -n "$ICON_SOURCE" ]; then
