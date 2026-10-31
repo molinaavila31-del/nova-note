@@ -37,6 +37,16 @@ jobs:
           npx cap add android
           npx cap sync android
 
+          # Solución para evitar el conflicto de clases duplicadas de Kotlin
+          echo "
+          configurations.all {
+              resolutionStrategy {
+                  force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+              }
+          }" >> android/app/build.gradle
+
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
