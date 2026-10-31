@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nova Note - Cyberpunk HUD</title>
+    <title>Nova Note - Quantum Core Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/nombre de tu icono exterior.jpg">
     <style>
@@ -17,6 +17,8 @@
             --text-main: #f8fafc;
             --text-muted: #64748b;
             --border-cyber: rgba(34, 211, 238, 0.25);
+            --danger: #f43f5e;
+            --warning: #f59e0b;
         }
 
         * {
@@ -36,7 +38,6 @@
             flex-direction: column;
         }
 
-        /* Contenedor principal de la app */
         .app-container {
             flex: 1;
             display: flex;
@@ -47,7 +48,16 @@
             padding-bottom: 90px;
         }
 
-        /* Cabecera HUD */
+        .view-section {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .view-section.active {
+            display: flex;
+        }
+
         .hud-header {
             background: var(--surface-card);
             border: 1px solid var(--border-cyber);
@@ -75,7 +85,6 @@
         .hud-brand span {
             font-size: 13px;
             font-weight: 600;
-            letter-spacing: 0.5px;
             color: var(--text-main);
         }
 
@@ -89,7 +98,6 @@
             font-weight: bold;
         }
 
-        /* Barra de búsqueda */
         .search-box {
             background: var(--surface-card);
             border: 1px solid var(--border-cyber);
@@ -109,11 +117,6 @@
             outline: none;
         }
 
-        .search-box input::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Filtros por carpetas y etiquetas */
         .filter-scroll {
             display: flex;
             gap: 8px;
@@ -134,7 +137,6 @@
             font-size: 12px;
             white-space: nowrap;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .chip.active {
@@ -144,14 +146,13 @@
             font-weight: bold;
         }
 
-        /* Listado de Tarjetas */
-        .notes-feed {
+        .notes-feed, .folders-feed {
             display: flex;
             flex-direction: column;
             gap: 14px;
         }
 
-        .note-card {
+        .note-card, .folder-card {
             background: var(--surface-card);
             border: 1px solid var(--border-cyber);
             border-radius: 14px;
@@ -187,7 +188,7 @@
             border-radius: 6px;
         }
 
-        .note-card h3 {
+        .note-card h3, .folder-card h3 {
             font-size: 16px;
             color: var(--text-main);
             font-weight: 600;
@@ -199,7 +200,6 @@
             line-height: 1.4;
         }
 
-        /* Bloque de código simulado */
         .code-snippet {
             background: #020617;
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -220,15 +220,196 @@
             margin-top: 4px;
         }
 
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-note-btn {
+            background: none;
+            border: none;
+            color: var(--warning);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
         .delete-note-btn {
             background: none;
             border: none;
-            color: #f43f5e;
+            color: var(--danger);
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
         }
 
-        /* Barra de pestañas inferior (Navegación) */
+        /* Calendario */
+        .calendar-box {
+            background: var(--surface-card);
+            border: 1px solid var(--border-cyber);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            text-align: center;
+        }
+
+        .cal-day-header {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .cal-day {
+            background: var(--bg-base);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px 0;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .cal-day.selected {
+            background: var(--neon-cyan);
+            color: #030712;
+            font-weight: bold;
+        }
+
+        .cal-day.has-event {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
+        }
+
+        /* Barra lateral inteligente */
+        .quick-edge-tab {
+            position: fixed;
+            right: 0;
+            top: 45%;
+            width: 8px;
+            height: 60px;
+            border-radius: 4px 0 0 4px;
+            cursor: pointer;
+            z-index: 105;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .quick-edge-tab.status-pending {
+            background: var(--neon-green);
+            box-shadow: 0 0 12px var(--neon-green);
+        }
+        .quick-edge-tab.status-normal {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        /* Panel Deslizable / Captura Exprés / Ajustes */
+        .quick-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1000;
+        }
+
+        .quick-sheet-overlay.open {
+            display: flex;
+        }
+
+        .quick-sheet {
+            background: #0b1329;
+            border: 1px solid var(--neon-cyan);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-height: 90vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+            overflow-y: auto;
+        }
+
+        .sheet-indicator {
+            width: 40px;
+            height: 4px;
+            background: var(--neon-cyan);
+            border-radius: 2px;
+            align-self: center;
+        }
+
+        .sheet-title-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--neon-cyan);
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .type-selector, .folder-pills {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .type-btn, .folder-pill {
+            background: var(--bg-base);
+            border: 1px solid var(--border-cyber);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .type-btn.active, .folder-pill.active {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(34, 211, 238, 0.1);
+            font-weight: bold;
+        }
+
+        input, textarea, select {
+            background: var(--bg-base);
+            border: 1px solid var(--border-cyber);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+
+        textarea {
+            height: 80px;
+            resize: none;
+        }
+
+        .save-cyber-btn {
+            background: var(--neon-cyan);
+            color: #030712;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+        }
+
+        /* Navegación Inferior */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -263,7 +444,6 @@
             font-size: 18px;
         }
 
-        /* Botón flotante principal (+) */
         .fab-btn {
             position: fixed;
             bottom: 75px;
@@ -282,236 +462,142 @@
             box-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
             cursor: pointer;
             z-index: 101;
-            transition: transform 0.2s;
-        }
-
-        .fab-btn:active {
-            transform: scale(0.9);
-        }
-
-        /* Pestaña lateral verde de acceso rápido en el borde derecho */
-        .quick-edge-tab {
-            position: fixed;
-            right: 0;
-            top: 45%;
-            width: 8px;
-            height: 60px;
-            background: var(--neon-green);
-            border-radius: 4px 0 0 4px;
-            box-shadow: 0 0 10px var(--neon-green);
-            cursor: pointer;
-            z-index: 105;
-        }
-
-        /* Panel Deslizable de Captura Exprés (Modal inferior) */
-        .quick-sheet-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(3, 7, 18, 0.8);
-            backdrop-filter: blur(5px);
-            display: none;
-            justify-content: center;
-            align-items: flex-end;
-            z-index: 1000;
-        }
-
-        .quick-sheet-overlay.open {
-            display: flex;
-        }
-
-        .quick-sheet {
-            background: #0b1329;
-            border: 1px solid var(--neon-cyan);
-            border-radius: 20px 20px 0 0;
-            width: 100%;
-            max-height: 90vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .sheet-indicator {
-            width: 40px;
-            height: 4px;
-            background: var(--neon-cyan);
-            border-radius: 2px;
-            align-self: center;
-            margin-bottom: 4px;
-        }
-
-        .sheet-title-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--neon-cyan);
-            font-size: 13px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
-        .type-selector {
-            display: flex;
-            gap: 8px;
-        }
-
-        .type-btn {
-            flex: 1;
-            background: var(--bg-base);
-            border: 1px solid var(--border-cyber);
-            color: var(--text-muted);
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .type-btn.active {
-            background: rgba(34, 211, 238, 0.15);
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            font-weight: bold;
-        }
-
-        .quick-sheet input, .quick-sheet textarea {
-            background: var(--bg-base);
-            border: 1px solid var(--border-cyber);
-            color: var(--text-main);
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-            width: 100%;
-        }
-
-        .quick-sheet textarea {
-            height: 100px;
-            resize: none;
-        }
-
-        .folder-pills {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-        }
-
-        .folder-pill {
-            background: var(--bg-base);
-            border: 1px solid var(--border-cyber);
-            color: var(--text-muted);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .folder-pill.active {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            background: rgba(34, 211, 238, 0.05);
-        }
-
-        .save-cyber-btn {
-            background: var(--neon-cyan);
-            color: #030712;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
-            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Pestaña lateral derecha de acceso rápido (Barra verde interactiva) -->
-    <div class="quick-edge-tab" onclick="toggleQuickSheet(true)" title="Acceso Rápido"></div>
+    <!-- Barra lateral inteligente -->
+    <div id="quick-edge-bar" class="quick-edge-tab status-normal" onclick="openQuickSheet()" title="Acceso Rápido"></div>
 
-    <!-- Contenedor Principal de la App -->
     <div class="app-container">
         
-        <!-- Cabecera HUD -->
-        <div class="hud-header">
-            <div class="hud-brand">
-                <img src="assets/nombre_de_tu_icono_interior.jpg" alt="Logo">
-                <span>Nova Notes</span>
+        <!-- VISTA 1: NOTAS -->
+        <div id="section-notes" class="view-section active">
+            <div class="hud-header">
+                <div class="hud-brand">
+                    <img src="assets/nombre_de_tu_icono_interior.jpg" alt="Logo">
+                    <span>Nova Notes</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div class="hud-badge" id="hud-avisos-badge">● 0 PENDIENTES</div>
+                    <button onclick="openSettingsSheet()" style="background:none; border:1px solid var(--border-cyber); color:var(--neon-cyan); padding:5px 8px; border-radius:8px; cursor:pointer; font-size:12px;">⚙️</button>
+                </div>
             </div>
-            <div class="hud-badge">● 2 AVISOS</div>
+
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="search-input" placeholder="Buscar notas, listas, código..." oninput="renderNotes()">
+            </div>
+
+            <div class="filter-scroll" id="folder-chips-container"></div>
+
+            <div class="filter-scroll">
+                <div class="chip active" onclick="setTypeFilter('TODOS', event)">TODOS</div>
+                <div class="chip" onclick="setTypeFilter('TEXTO', event)">TEXTO</div>
+                <div class="chip" onclick="setTypeFilter('CHECKLIST', event)">CHECKLIST</div>
+                <div class="chip" onclick="setTypeFilter('CÓDIGO', event)">CÓDIGO</div>
+            </div>
+
+            <div class="notes-feed" id="notes-feed"></div>
         </div>
 
-        <!-- Buscador -->
-        <div class="search-box">
-            <span>🔍</span>
-            <input type="text" id="search-input" placeholder="Buscar notas, listas, código..." oninput="filterNotes()">
+        <!-- VISTA 2: CALENDARIO -->
+        <div id="section-calendar" class="view-section">
+            <div class="hud-header">
+                <div class="hud-brand">
+                    <span>📅 CALENDARIO & RECORDATORIOS</span>
+                </div>
+            </div>
+
+            <div class="calendar-box">
+                <h3 id="calendar-month-title" style="color: var(--neon-cyan); font-size: 15px; text-align: center; margin-bottom: 8px;">Octubre 2026</h3>
+                <div class="calendar-grid">
+                    <div class="cal-day-header">Lun</div>
+                    <div class="cal-day-header">Mar</div>
+                    <div class="cal-day-header">Mié</div>
+                    <div class="cal-day-header">Jue</div>
+                    <div class="cal-day-header">Vie</div>
+                    <div class="cal-day-header">Sáb</div>
+                    <div class="cal-day-header">Dom</div>
+                </div>
+                <div class="calendar-grid" id="calendar-days-grid"></div>
+            </div>
+
+            <div class="note-card">
+                <h3 id="selected-date-label" style="font-size: 14px; color: var(--neon-cyan);">Selecciona un día</h3>
+                <input type="text" id="cal-note-title" placeholder="Título del recordatorio...">
+                <textarea id="cal-note-content" placeholder="Detalles de la tarea u hora de aviso..."></textarea>
+                <button class="save-cyber-btn" onclick="saveCalendarReminder()">+ Añadir Recordatorio en Fecha</button>
+            </div>
+
+            <div class="notes-feed" id="calendar-events-feed"></div>
         </div>
 
-        <!-- Filtros horizontales de carpetas -->
-        <div class="filter-scroll">
-            <div class="chip active" onclick="setFolderFilter('Todas', event)">Todas</div>
-            <div class="chip" onclick="setFolderFilter('Raíz', event)">Raíz</div>
-            <div class="chip" onclick="setFolderFilter('Cyber Ops', event)">Cyber Ops</div>
-            <div class="chip" onclick="setFolderFilter('Code Matrix', event)">Code Matrix</div>
+        <!-- VISTA 3: CARPETAS -->
+        <div id="section-folders" class="view-section">
+            <div class="hud-header">
+                <div class="hud-brand">
+                    <span>📁 GESTOR DE CARPETAS</span>
+                </div>
+            </div>
+
+            <div class="note-card">
+                <h3>Crear Nueva Carpeta</h3>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="new-folder-name" placeholder="Nombre de la carpeta...">
+                    <button class="save-cyber-btn" onclick="createNewFolder()" style="padding: 0 16px;">Crear</button>
+                </div>
+            </div>
+
+            <div class="folders-feed" id="folders-feed-list"></div>
         </div>
 
-        <!-- Subfiltros por tipo -->
-        <div class="filter-scroll">
-            <div class="chip active" onclick="setTypeFilter('TODOS', event)">TODOS</div>
-            <div class="chip" onclick="setTypeFilter('TEXTO', event)">TEXTO</div>
-            <div class="chip" onclick="setTypeFilter('CHECKLIST', event)">CHECKLIST</div>
-            <div class="chip" onclick="setTypeFilter('CÓDIGO', event)">CÓDIGO</div>
-        </div>
-
-        <!-- Listado de Notas -->
-        <div class="notes-feed" id="notes-feed">
-            <!-- Se inyectan dinámicamente -->
+        <!-- VISTA 4: PAPELERA -->
+        <div id="section-trash" class="view-section">
+            <div class="hud-header">
+                <div class="hud-brand">
+                    <span>🗑️ PAPELERA DE SISTEMA</span>
+                </div>
+                <button onclick="emptyTrash()" style="background: rgba(244,63,94,0.1); border:1px solid var(--danger); color:var(--danger); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:11px;">Vaciar Papelera</button>
+            </div>
+            <div class="notes-feed" id="trash-feed"></div>
         </div>
 
     </div>
 
-    <!-- Botón flotante de acción rápida (+) -->
-    <button class="fab-btn" onclick="toggleQuickSheet(true)">+</button>
+    <button class="fab-btn" onclick="openQuickSheet()">+</button>
 
-    <!-- Barra de Navegación Inferior -->
+    <!-- Navegación Inferior -->
     <nav class="bottom-nav">
-        <button class="nav-item active">
+        <button class="nav-item active" onclick="switchTab('notes', event)">
             <span class="icon">≡</span>
             <span>NOTAS</span>
         </button>
-        <button class="nav-item" onclick="alert('Módulo de Calendario y Tiempos')">
+        <button class="nav-item" onclick="switchTab('calendar', event)">
             <span class="icon">📅</span>
             <span>CALENDARIO</span>
         </button>
-        <button class="nav-item" onclick="alert('Gestor de Carpetas Avanzado')">
+        <button class="nav-item" onclick="switchTab('folders', event)">
             <span class="icon">📁</span>
             <span>CARPETAS</span>
         </button>
+        <button class="nav-item" onclick="switchTab('trash', event)">
+            <span class="icon">🗑️</span>
+            <span>PAPELERA</span>
+        </button>
     </nav>
 
-    <!-- Modal / Panel Deslizable de Captura Exprés -->
+    <!-- Modal: Captura Exprés -->
     <div class="quick-sheet-overlay" id="sheet-overlay" onclick="handleOverlayClick(event)">
         <div class="quick-sheet">
             <div class="sheet-indicator"></div>
             <div class="sheet-title-bar">
-                <span style="color: var(--neon-green);">●</span> NOVA NOTE • CAPTURA EXPRÉS
+                <span style="color: var(--neon-green);">●</span> <span id="sheet-mode-title">CAPTURA EXPRÉS</span>
             </div>
 
-            <!-- Selector de Tipo -->
+            <input type="hidden" id="edit-note-id" value="">
+
             <div class="type-selector">
                 <div class="type-btn active" onclick="selectType('TEXTO', event)">Texto</div>
                 <div class="type-btn" onclick="selectType('CHECKLIST', event)">Checklist</div>
@@ -521,14 +607,29 @@
             <input type="text" id="quick-title" placeholder="Título de la idea...">
             <textarea id="quick-content" placeholder="Apunta tu idea al vuelo..."></textarea>
 
-            <!-- Selector de Carpeta -->
-            <div class="folder-pills" id="sheet-folders">
-                <div class="folder-pill active" onclick="selectSheetFolder('Raíz', event)">📁 Raíz</div>
-                <div class="folder-pill" onclick="selectSheetFolder('Cyber Ops', event)">📁 Cyber Ops</div>
-                <div class="folder-pill" onclick="selectSheetFolder('Code Matrix', event)">📁 Code Matrix</div>
-            </div>
+            <div class="folder-pills" id="sheet-folder-pills"></div>
 
-            <button class="save-cyber-btn" onclick="saveQuickNote()">➜ GUARDAR EN NOVA NOTE</button>
+            <button class="save-cyber-btn" id="save-btn-action" onclick="saveQuickNote()">➜ GUARDAR EN NOVA NOTE</button>
+        </div>
+    </div>
+
+    <!-- Modal: Configuración de Sistema -->
+    <div class="quick-sheet-overlay" id="settings-overlay" onclick="handleSettingsClick(event)">
+        <div class="quick-sheet">
+            <div class="sheet-indicator"></div>
+            <div class="sheet-title-bar">
+                <span style="color: var(--neon-cyan);">⚙️</span> CONFIGURACIÓN DE SISTEMA Y ACCESOS
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid var(--border-cyber);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 13px; font-weight: bold;">Barra lateral flotante global</span>
+                        <input type="checkbox" id="toggle-edge-bar" checked onchange="toggleEdgeBarSetting()" style="width: 20px; height: 20px; accent-color: var(--neon-cyan);">
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted);">Permite mantener la barra de acceso rápido activa en los bordes de la interfaz. (Nota: Para superposición flotante sobre apps externas del sistema operativo Android, requiere permisos nativos de capa superior).</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -537,53 +638,97 @@
         let currentTypeFilter = 'TODOS';
         let selectedSheetType = 'TEXTO';
         let selectedSheetFolder = 'Raíz';
+        let selectedCalendarDate = new Date().toISOString().split('T')[0];
+        let edgeBarEnabled = true;
 
-        // Datos iniciales por defecto si está vacío
         const defaultNotes = [
-            {
-                id: 1,
-                title: "Bienvenido a Nova Note",
-                content: "Nova Note es tu centro de comando cyberpunk para apuntes ultrarrápidos y gestión del tiempo.",
-                type: "TEXTO",
-                folder: "Cyber Ops",
-                date: "31/10/2026"
-            },
-            {
-                id: 2,
-                title: "Snippet: Express Capture Algorithm",
-                content: "// Nova Note Realtime Capture\nfun triggerCosoAlert(hasUnread: Boolean): Color { return if (hasUnread) ... }",
-                type: "CÓDIGO",
-                folder: "Code Matrix",
-                date: "31/10/2026"
-            }
+            { id: 1, title: "Bienvenido a Nova Note", content: "Centro de comando cyberpunk configurado correctamente.", type: "TEXTO", folder: "Cyber Ops", date: "31/10/2026", reminderDate: null }
         ];
 
+        const defaultFolders = ['Raíz', 'Cyber Ops', 'Code Matrix'];
+
         document.addEventListener('DOMContentLoaded', () => {
-            if (!localStorage.getItem('nova_cyber_notes')) {
-                localStorage.setItem('nova_cyber_notes', JSON.stringify(defaultNotes));
+            if (!localStorage.getItem('nova_notes_db')) localStorage.setItem('nova_notes_db', JSON.stringify(defaultNotes));
+            if (!localStorage.getItem('nova_trash_db')) localStorage.setItem('nova_trash_db', JSON.stringify([]));
+            if (!localStorage.getItem('nova_folders_db')) localStorage.setItem('nova_folders_db', JSON.stringify(defaultFolders));
+            if (localStorage.getItem('nova_edge_bar') !== null) {
+                edgeBarEnabled = localStorage.getItem('nova_edge_bar') === 'true';
+                document.getElementById('toggle-edge-bar').checked = edgeBarEnabled;
             }
-            renderNotes();
+            updateEdgeBarVisibility();
+            refreshAllData();
         });
 
-        function toggleQuickSheet(open) {
-            const overlay = document.getElementById('sheet-overlay');
-            if (open) {
-                overlay.classList.add('open');
-            } else {
-                overlay.classList.remove('open');
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => btn.classList.remove('active'));
+
+            if (tabName === 'notes') document.getElementById('section-notes').classList.add('active');
+            else if (tabName === 'calendar') { document.getElementById('section-calendar').classList.add('active'); renderCalendar(); }
+            else if (tabName === 'folders') { document.getElementById('section-folders').classList.add('active'); renderFoldersView(); }
+            else if (tabName === 'trash') { document.getElementById('section-trash').classList.add('active'); renderTrashView(); }
+
+            event.currentTarget.classList.add('active');
+        }
+
+        function openQuickSheet(noteId = null) {
+            document.getElementById('edit-note-id').value = '';
+            document.getElementById('quick-title').value = '';
+            document.getElementById('quick-content').value = '';
+            document.getElementById('sheet-mode-title').textContent = 'CAPTURA EXPRÉS';
+            document.getElementById('save-btn-action').textContent = '➜ GUARDAR EN NOVA NOTE';
+
+            if (noteId) {
+                const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+                const note = notes.find(n => n.id === noteId);
+                if (note) {
+                    document.getElementById('edit-note-id').value = note.id;
+                    document.getElementById('quick-title').value = note.title;
+                    document.getElementById('quick-content').value = note.content;
+                    selectedSheetType = note.type;
+                    selectedSheetFolder = note.folder;
+                    document.getElementById('sheet-mode-title').textContent = 'EDITAR NOTA';
+                    document.getElementById('save-btn-action').textContent = '💾 ACTUALIZAR NOTA';
+                }
             }
+            document.getElementById('sheet-overlay').classList.add('open');
+            renderSheetFolders();
+        }
+
+        function openSettingsSheet() {
+            document.getElementById('settings-overlay').classList.add('open');
         }
 
         function handleOverlayClick(event) {
-            if (event.target.id === 'sheet-overlay') {
-                toggleQuickSheet(false);
-            }
+            if (event.target.id === 'sheet-overlay') document.getElementById('sheet-overlay').classList.remove('open');
+        }
+
+        function handleSettingsClick(event) {
+            if (event.target.id === 'settings-overlay') document.getElementById('settings-overlay').classList.remove('open');
+        }
+
+        function toggleEdgeBarSetting() {
+            edgeBarEnabled = document.getElementById('toggle-edge-bar').checked;
+            localStorage.setItem('nova_edge_bar', edgeBarEnabled);
+            updateEdgeBarVisibility();
+        }
+
+        function updateEdgeBarVisibility() {
+            document.getElementById('quick-edge-bar').style.display = edgeBarEnabled ? 'block' : 'none';
         }
 
         function selectType(type, event) {
             document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
             event.currentTarget.classList.add('active');
             selectedSheetType = type;
+        }
+
+        function renderSheetFolders() {
+            const folders = JSON.parse(localStorage.getItem('nova_folders_db') || '[]');
+            const container = document.getElementById('sheet-folder-pills');
+            container.innerHTML = folders.map(f => `
+                <div class="folder-pill ${selectedSheetFolder === f ? 'active' : ''}" onclick="selectSheetFolder('${f}', event)">📁 ${f}</div>
+            `).join('');
         }
 
         function selectSheetFolder(folder, event) {
@@ -593,21 +738,15 @@
         }
 
         function setFolderFilter(folder, event) {
-            document.querySelectorAll('.filter-scroll .chip').forEach(c => {
-                if(c.textContent === 'Todas' || c.textContent === 'Raíz' || c.textContent === 'Cyber Ops' || c.textContent === 'Code Matrix') {
-                    c.classList.remove('active');
-                }
-            });
+            document.querySelectorAll('#folder-chips-container .chip').forEach(c => c.classList.remove('active'));
             event.currentTarget.classList.add('active');
             currentFolderFilter = folder;
             renderNotes();
         }
 
         function setTypeFilter(type, event) {
-            document.querySelectorAll('.filter-scroll .chip').forEach(c => {
-                if(c.textContent === 'TODOS' || c.textContent === 'TEXTO' || c.textContent === 'CHECKLIST' || c.textContent === 'CÓDIGO') {
-                    c.classList.remove('active');
-                }
+            document.querySelectorAll('.view-section.active .filter-scroll .chip').forEach(c => {
+                if(['TODOS', 'TEXTO', 'CHECKLIST', 'CÓDIGO'].includes(c.textContent)) c.classList.remove('active');
             });
             event.currentTarget.classList.add('active');
             currentTypeFilter = type;
@@ -615,37 +754,102 @@
         }
 
         function saveQuickNote() {
-            const titleInput = document.getElementById('quick-title');
-            const contentInput = document.getElementById('quick-content');
-            
-            const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
-
+            const editId = document.getElementById('edit-note-id').value;
+            const title = document.getElementById('quick-title').value.trim();
+            const content = document.getElementById('quick-content').value.trim();
             if (!title && !content) return;
 
-            const notes = JSON.parse(localStorage.getItem('nova_cyber_notes') || '[]');
-            const newNote = {
+            let notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+
+            if (editId) {
+                notes = notes.map(n => n.id == editId ? { ...n, title: title || 'Sin título', content, type: selectedSheetType, folder: selectedSheetFolder } : n);
+            } else {
+                notes.unshift({
+                    id: Date.now(),
+                    title: title || 'Nodo sin título',
+                    content,
+                    type: selectedSheetType,
+                    folder: selectedSheetFolder,
+                    date: new Date().toLocaleDateString(),
+                    reminderDate: null
+                });
+            }
+
+            localStorage.setItem('nova_notes_db', JSON.stringify(notes));
+            document.getElementById('sheet-overlay').classList.remove('open');
+            refreshAllData();
+        }
+
+        function saveCalendarReminder() {
+            const title = document.getElementById('cal-note-title').value.trim();
+            const content = document.getElementById('cal-note-content').value.trim();
+            if (!title && !content) return;
+
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            notes.unshift({
                 id: Date.now(),
-                title: title || 'Nodo sin título',
-                content: content,
-                type: selectedSheetType,
-                folder: selectedSheetFolder,
-                date: new Date().toLocaleDateString()
-            };
+                title: title || 'Recordatorio',
+                content,
+                type: 'TEXTO',
+                folder: 'Raíz',
+                date: new Date().toLocaleDateString(),
+                reminderDate: selectedCalendarDate
+            });
 
-            notes.unshift(newNote);
-            localStorage.setItem('nova_cyber_notes', JSON.stringify(notes));
+            localStorage.setItem('nova_notes_db', JSON.stringify(notes));
+            document.getElementById('cal-note-title').value = '';
+            document.getElementById('cal-note-content').value = '';
+            refreshAllData();
+            renderCalendar();
+        }
 
-            titleInput.value = '';
-            contentInput.value = '';
-            toggleQuickSheet(false);
+        function createNewFolder() {
+            const name = document.getElementById('new-folder-name').value.trim();
+            if(!name) return;
+            let folders = JSON.parse(localStorage.getItem('nova_folders_db') || '[]');
+            if(!folders.includes(name)) {
+                folders.push(name);
+                localStorage.setItem('nova_folders_db', JSON.stringify(folders));
+                document.getElementById('new-folder-name').value = '';
+                refreshAllData();
+                renderFoldersView();
+            }
+        }
+
+        function refreshAllData() {
             renderNotes();
+            updateEdgeBarAndBadgeStatus();
+            renderFolderChips();
+        }
+
+        function updateEdgeBarAndBadgeStatus() {
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            const pendingReminders = notes.filter(n => n.reminderDate !== null);
+            const edgeBar = document.getElementById('quick-edge-bar');
+            const badge = document.getElementById('hud-avisos-badge');
+
+            if (pendingReminders.length > 0) {
+                edgeBar.className = 'quick-edge-tab status-pending';
+                badge.textContent = `● ${pendingReminders.length} PENDIENTES`;
+                badge.style.color = 'var(--neon-green)';
+            } else {
+                edgeBar.className = 'quick-edge-tab status-normal';
+                badge.textContent = `● 0 PENDIENTES`;
+                badge.style.color = 'var(--text-muted)';
+            }
+        }
+
+        function renderFolderChips() {
+            const folders = JSON.parse(localStorage.getItem('nova_folders_db') || '[]');
+            const container = document.getElementById('folder-chips-container');
+            container.innerHTML = `<div class="chip ${currentFolderFilter === 'Todas' ? 'active' : ''}" onclick="setFolderFilter('Todas', event)">Todas</div>` +
+                folders.map(f => `<div class="chip ${currentFolderFilter === f ? 'active' : ''}" onclick="setFolderFilter('${f}', event)">${f}</div>`).join('');
         }
 
         function renderNotes() {
             const feed = document.getElementById('notes-feed');
             const search = document.getElementById('search-input').value.toLowerCase();
-            const notes = JSON.parse(localStorage.getItem('nova_cyber_notes') || '[]');
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
 
             const filtered = notes.filter(note => {
                 const matchesFolder = currentFolderFilter === 'Todas' || note.folder === currentFolderFilter;
@@ -659,38 +863,142 @@
                 return;
             }
 
-            feed.innerHTML = filtered.map(note => {
-                let contentBlock = `<p>${escapeHtml(note.content)}</p>`;
-                if (note.type === 'CÓDIGO') {
-                    contentBlock = `<div class="code-snippet">${escapeHtml(note.content)}</div>`;
-                }
-
-                return `
-                    <div class="note-card">
-                        <div class="note-meta-row">
-                            <span class="tag-type">${note.type}</span>
-                            <span class="tag-folder">${note.folder}</span>
+            feed.innerHTML = filtered.map(note => `
+                <div class="note-card">
+                    <div class="note-meta-row">
+                        <span class="tag-type">${note.type}</span>
+                        <span class="tag-folder">${note.folder}</span>
+                        ${note.reminderDate ? `<span style="font-size:10px; color:var(--neon-green);">⏰ ${note.reminderDate}</span>` : ''}
+                    </div>
+                    <h3>${escapeHtml(note.title)}</h3>
+                    ${note.type === 'CÓDIGO' ? `<div class="code-snippet">${escapeHtml(note.content)}</div>` : `<p>${escapeHtml(note.content)}</p>`}
+                    <div class="note-footer-row">
+                        <span>${note.date}</span>
+                        <div class="action-btns">
+                            <button class="edit-note-btn" onclick="openQuickSheet(${note.id})">✏️ Editar</button>
+                            <button class="delete-note-btn" onclick="moveToTrash(${note.id})">🗑️ Borrar</button>
                         </div>
-                        <h3>${escapeHtml(note.title)}</h3>
-                        ${contentBlock}
-                        <div class="note-footer-row">
-                            <span>${note.date}</span>
-                            <button class="delete-note-btn" onclick="deleteNote(${note.id})">×</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function moveToTrash(id) {
+            let notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            let trash = JSON.parse(localStorage.getItem('nova_trash_db') || '[]');
+            const noteIndex = notes.findIndex(n => n.id === id);
+            if (noteIndex > -1) {
+                trash.unshift(notes[noteIndex]);
+                notes.splice(noteIndex, 1);
+                localStorage.setItem('nova_notes_db', JSON.stringify(notes));
+                localStorage.setItem('nova_trash_db', JSON.stringify(trash));
+                refreshAllData();
+                renderTrashView();
+            }
+        }
+
+        function renderTrashView() {
+            const feed = document.getElementById('trash-feed');
+            const trash = JSON.parse(localStorage.getItem('nova_trash_db') || '[]');
+
+            if (trash.length === 0) {
+                feed.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">La papelera está vacía.</p>';
+                return;
+            }
+
+            feed.innerHTML = trash.map(note => `
+                <div class="note-card">
+                    <div class="note-meta-row">
+                        <span class="tag-type">${note.type}</span>
+                        <span class="tag-folder">${note.folder}</span>
+                    </div>
+                    <h3>${escapeHtml(note.title)}</h3>
+                    <p>${escapeHtml(note.content)}</p>
+                    <div class="note-footer-row">
+                        <span>${note.date}</span>
+                        <div class="action-btns">
+                            <button class="edit-note-btn" onclick="restoreFromTrash(${note.id})">♻️ Restaurar</button>
+                            <button class="delete-note-btn" onclick="deleteForever(${note.id})">❌ Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function restoreFromTrash(id) {
+            let notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            let trash = JSON.parse(localStorage.getItem('nova_trash_db') || '[]');
+            const idx = trash.findIndex(n => n.id === id);
+            if (idx > -1) {
+                notes.unshift(trash[idx]);
+                trash.splice(idx, 1);
+                localStorage.setItem('nova_notes_db', JSON.stringify(notes));
+                localStorage.setItem('nova_trash_db', JSON.stringify(trash));
+                refreshAllData();
+                renderTrashView();
+            }
+        }
+
+        function deleteForever(id) {
+            let trash = JSON.parse(localStorage.getItem('nova_trash_db') || '[]');
+            trash = trash.filter(n => n.id !== id);
+            localStorage.setItem('nova_trash_db', JSON.stringify(trash));
+            renderTrashView();
+        }
+
+        function emptyTrash() {
+            localStorage.setItem('nova_trash_db', JSON.stringify([]));
+            renderTrashView();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-days-grid');
+            const feed = document.getElementById('calendar-events-feed');
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            
+            document.getElementById('selected-date-label').textContent = `Recordatorios para: ${selectedCalendarDate}`;
+
+            let daysHtml = '';
+            for (let i = 1; i <= 31; i++) {
+                const dayStr = `2026-10-${i < 10 ? '0' + i : i}`;
+                const hasEv = notes.some(n => n.reminderDate === dayStr);
+                const isSel = selectedCalendarDate === dayStr;
+                daysHtml += `<div class="cal-day ${isSel ? 'selected' : ''} ${hasEv ? 'has-event' : ''}" onclick="selectCalendarDate('${dayStr}')">${i}</div>`;
+            }
+            grid.innerHTML = daysHtml;
+
+            const dayNotes = notes.filter(n => n.reminderDate === selectedCalendarDate);
+            feed.innerHTML = dayNotes.length === 0 ? '<p style="color: var(--text-muted); font-size:12px; text-align:center;">No hay recordatorios este día.</p>' :
+                dayNotes.map(n => `
+                    <div class="note-card">
+                        <h3>📌 ${escapeHtml(n.title)}</h3>
+                        <p>${escapeHtml(n.content)}</p>
+                        <button class="delete-note-btn" onclick="moveToTrash(${n.id})">🗑️ Borrar</button>
+                    </div>
+                `).join('');
+        }
+
+        function selectCalendarDate(dateStr) {
+            selectedCalendarDate = dateStr;
+            renderCalendar();
+        }
+
+        function renderFoldersView() {
+            const folders = JSON.parse(localStorage.getItem('nova_folders_db') || '[]');
+            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
+            const list = document.getElementById('folders-feed-list');
+
+            list.innerHTML = folders.map(folder => {
+                const fNotes = notes.filter(n => n.folder === folder);
+                return `
+                    <div class="folder-card">
+                        <h3>📁 ${folder} (${fNotes.length} notas)</h3>
+                        <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+                            ${fNotes.length === 0 ? '<span style="font-size:11px; color:var(--text-muted);">Vacía</span>' : fNotes.map(n => `<span style="font-size:12px; color:var(--neon-cyan);">• ${escapeHtml(n.title)}</span>`).join('')}
                         </div>
                     </div>
                 `;
             }).join('');
-        }
-
-        function filterNotes() {
-            renderNotes();
-        }
-
-        function deleteNote(id) {
-            let notes = JSON.parse(localStorage.getItem('nova_cyber_notes') || '[]');
-            notes = notes.notes.filter ? notes.filter(n => n.id !== id) : [];
-            localStorage.setItem('nova_cyber_notes', JSON.stringify(notes));
-            renderNotes();
         }
 
         function escapeHtml(text) {

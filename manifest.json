@@ -2,9 +2,9 @@
   "name": "Nova Note",
   "icons": [
     {
-      "src": "assets/nombre_de_tu_icono_exterior.jpg",
+      "src": "assets/nombre_de_tu_icono_exterior.png",
       "sizes": "192x192",
-      "type": "image/jpg"
+      "type": "image/png"
     }
   ]
 }
