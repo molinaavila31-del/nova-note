@@ -37,23 +37,46 @@ jobs:
           npx cap add android
           npx cap sync android
 
-          # Solución para evitar el conflicto de clases duplicadas de Kotlin
+          # 1. Solución para evitar el conflicto de clases duplicadas de Kotlin
           echo "
           configurations.all {
               resolutionStrategy {
                   force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
                   force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
-                  force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
               }
           }" >> android/app/build.gradle
 
-          # Inyectar automáticamente el permiso SYSTEM_ALERT_WINDOW en el AndroidManifest.xml
+          # 2. Inyectar automáticamente los permisos en el AndroidManifest.xml
           MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST_PATH" ]; then
             sed -i '/<application/i \    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />' "$MANIFEST_PATH"
+            sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST_PATH"
+            sed -i '/<application/i \    <uses-permission android:name="android.permission.WAKE_LOCK" />' "$MANIFEST_PATH"
+            sed -i '/<application/i \    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />' "$MANIFEST_PATH"
           fi
 
-          # Modificar el MainActivity.java automáticamente para solicitar el permiso en Android
+          # 3. Sustituir automáticamente los iconos genéricos por tu icono exterior de assets
+          ICON_SOURCE=""
+          if [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
+            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
+          elif [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
+            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
+          elif [ -f "assets/nombre_de_tu_icono_exterior.png" ]; then
+            ICON_SOURCE="assets/nombre_de_tu_icono_exterior.png"
+          fi
+
+          if [ -n "$ICON_SOURCE" ]; then
+            echo "Copiando icono personalizado desde $ICON_SOURCE..."
+            RES_DIR="android/app/src/main/res"
+            for d in mipmap-hdpi mipmap-mdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              mkdir -p "$RES_DIR/$d"
+              cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher.png" 2>/dev/null || cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher.jpg" 2>/dev/null || true
+              cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher_round.png" 2>/dev/null || cp "$ICON_SOURCE" "$RES_DIR/$d/ic_launcher_round.jpg" 2>/dev/null || true
+            done
+          fi
+
+          # 4. Modificar MainActivity.java para solicitar permisos en tiempo de ejecución
           MAIN_ACTIVITY="android/app/src/main/java/com/novanote/app/MainActivity.java"
           if [ -f "$MAIN_ACTIVITY" ]; then
             cat << 'EOF' > "$MAIN_ACTIVITY"
@@ -64,6 +87,9 @@ jobs:
           import android.os.Build;
           import android.provider.Settings;
           import android.os.Bundle;
+          import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
+          import android.Manifest;
           import com.getcapacitor.BridgeActivity;
 
           public class MainActivity extends BridgeActivity {
@@ -71,11 +97,19 @@ jobs:
               public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
+                  // Solicitar permiso de superposición flotante (Aparecer encima)
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                       if (!Settings.canDrawOverlays(this)) {
                           Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                   Uri.parse("package:" + getPackageName()));
                           startActivity(intent);
+                      }
+                  }
+
+                  // Solicitar permisos de notificaciones para el calendario en Android 13+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                      if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                          ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
                       }
                   }
               }

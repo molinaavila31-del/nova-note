@@ -951,32 +951,45 @@
             renderTrashView();
         }
 
-        function renderCalendar() {
-            const grid = document.getElementById('calendar-days-grid');
-            const feed = document.getElementById('calendar-events-feed');
-            const notes = JSON.parse(localStorage.getItem('nova_notes_db') || '[]');
-            
-            document.getElementById('selected-date-label').textContent = `Recordatorios para: ${selectedCalendarDate}`;
+        // Función para renderizar los días del mes en el calendario
+function renderCalendar(year, month) {
+    const calendarGrid = document.getElementById('calendar-grid'); // O tu contenedor de días
+    calendarGrid.innerHTML = '';
 
-            let daysHtml = '';
-            for (let i = 1; i <= 31; i++) {
-                const dayStr = `2026-10-${i < 10 ? '0' + i : i}`;
-                const hasEv = notes.some(n => n.reminderDate === dayStr);
-                const isSel = selectedCalendarDate === dayStr;
-                daysHtml += `<div class="cal-day ${isSel ? 'selected' : ''} ${hasEv ? 'has-event' : ''}" onclick="selectCalendarDate('${dayStr}')">${i}</div>`;
-            }
-            grid.innerHTML = daysHtml;
+    // Obtener la fecha actual normalizada a las 00:00:00 para comparar solo días
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-            const dayNotes = notes.filter(n => n.reminderDate === selectedCalendarDate);
-            feed.innerHTML = dayNotes.length === 0 ? '<p style="color: var(--text-muted); font-size:12px; text-align:center;">No hay recordatorios este día.</p>' :
-                dayNotes.map(n => `
-                    <div class="note-card">
-                        <h3>📌 ${escapeHtml(n.title)}</h3>
-                        <p>${escapeHtml(n.content)}</p>
-                        <button class="delete-note-btn" onclick="moveToTrash(${n.id})">🗑️ Borrar</button>
-                    </div>
-                `).join('');
+    // Supongamos que tienes un bucle que recorre los días del mes o los genera:
+    // const totalDays = ... (días del mes actual)
+    
+    for (let day = 1; day <= totalDays; day++) {
+        const currentDate = new Date(year, month, day);
+        currentDate.setHours(0, 0, 0, 0);
+
+        const dayElement = document.createElement('div');
+        dayElement.classList.add('calendar-day');
+        dayElement.textContent = day;
+
+        // VERIFICAR SI EL DÍA YA PASÓ
+        if (currentDate < today) {
+            // Día pasado: se deshabilita visualmente y no permite clics
+            dayElement.classList.add('disabled-day');
+            dayElement.style.opacity = '0.4';
+            dayElement.style.pointerEvents = 'none';
+        } else {
+            // Día actual o futuro: habilitado para agregar notas o recordatorios
+            dayElement.classList.add('active-day');
+            dayElement.addEventListener('click', () => {
+                selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                // Aquí activas la vista para añadir el recordatorio en esa fecha
+                onSelectFutureDate(selectedDate);
+            });
         }
+
+			calendarGrid.appendChild(dayElement);
+		}
+	}
 
         function selectCalendarDate(dateStr) {
             selectedCalendarDate = dateStr;
