@@ -1,37 +1,9 @@
-name: Build Android APK
-
-on:
-  push:
-    branches: [ "main" ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: |
-          npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init NovaNote com.novanote.app --web-dir .
-          npx cap add android
-          npx cap sync android
-
-      - name: Build APK with Gradle
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+- name: Install dependencies & Capacitor
+            run: |
+              if [ ! -f package.json ]; then
+                npm init -y
+              fi
+              npm install @capacitor/core @capacitor/cli @capacitor/android
+              npx cap init NovaNote com.novanote.app --web-dir . --yes || true
+              npx cap add android
+              npx cap sync android
