@@ -1,117 +1,329 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="es">
 <head>
-    <title>Code coverage report for lib/</title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="../prettify.css">
-    <link rel="stylesheet" href="../base.css">
-    <style type='text/css'>
-        div.coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nova Note</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/icon.png">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --primary-color: #3b82f6;
+            --accent-color: #60a5fa;
+            --text-color: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Barra lateral flotante / Navegación */
+        .sidebar {
+            width: 70px;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 20px;
+        }
+
+        .logo-container img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 12px;
+            transition: 0.2s;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Contenido principal */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 20px;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 20px;
+            color: var(--text-color);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Secciones */
+        .section {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            gap: 15px;
+        }
+
+        .section.active {
+            display: flex;
+        }
+
+        /* Notas */
+        .note-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        input, textarea, select {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        button.primary-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button.primary-btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .note-card {
+            background-color: var(--surface-color);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+        }
+
+        .note-card h3 {
+            font-size: 16px;
+            color: var(--accent-color);
+        }
+
+        .note-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            word-break: break-word;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Estilo Calendario básico */
+        .calendar-view {
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
         }
     </style>
 </head>
 <body>
-<header class="app-header">
-    <!-- Aquí colocas tu icono interior personalizado -->
-    <img src="assets/nombre_de_tu_icono_interior.png" alt="Nova Note Logo" class="app-logo">
-    <h1>Nova Note</h1>
-</header>
-<div class="header high">
-    <h1>Code coverage report for <span class="entity">lib/</span></h1>
-    <h2>
-        Statements: <span class="metric">98.01% <small>(148 / 151)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        Branches: <span class="metric">92.94% <small>(79 / 85)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        Functions: <span class="metric">100% <small>(20 / 20)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        Lines: <span class="metric">99.31% <small>(143 / 144)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
-        Ignored: <span class="metric"><span class="ignore-none">none</span></span> &nbsp;&nbsp;&nbsp;&nbsp;
-    </h2>
-    <div class="path"><a href="../index.html">All files</a> &#187; lib/</div>
-</div>
-<div class="body">
-<div class="coverage-summary">
-<table>
-<thead>
-<tr>
-   <th data-col="file" data-fmt="html" data-html="true" class="file">File</th>
-   <th data-col="pic" data-type="number" data-fmt="html" data-html="true" class="pic"></th>
-   <th data-col="statements" data-type="number" data-fmt="pct" class="pct">Statements</th>
-   <th data-col="statements_raw" data-type="number" data-fmt="html" class="abs"></th>
-   <th data-col="branches" data-type="number" data-fmt="pct" class="pct">Branches</th>
-   <th data-col="branches_raw" data-type="number" data-fmt="html" class="abs"></th>
-   <th data-col="functions" data-type="number" data-fmt="pct" class="pct">Functions</th>
-   <th data-col="functions_raw" data-type="number" data-fmt="html" class="abs"></th>
-   <th data-col="lines" data-type="number" data-fmt="pct" class="pct">Lines</th>
-   <th data-col="lines_raw" data-type="number" data-fmt="html" class="abs"></th>
-</tr>
-</thead>
-<tbody><tr>
-	<td class="file high" data-value="constants.js"><a href="constants.js.html">constants.js</a></td>
-	<td data-value="100" class="pic high"><span class="cover-fill cover-full" style="width: 100px;"></span><span class="cover-empty" style="width:0px;"></span></td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="1" class="abs high">(1&nbsp;/&nbsp;1)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="0" class="abs high">(0&nbsp;/&nbsp;0)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="0" class="abs high">(0&nbsp;/&nbsp;0)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="1" class="abs high">(1&nbsp;/&nbsp;1)</td>
-	</tr>
 
-<tr>
-	<td class="file high" data-value="readable_streambuffer.js"><a href="readable_streambuffer.js.html">readable_streambuffer.js</a></td>
-	<td data-value="98.82" class="pic high"><span class="cover-fill" style="width: 98px;"></span><span class="cover-empty" style="width:2px;"></span></td>
-	<td data-value="98.82" class="pct high">98.82%</td>
-	<td data-value="85" class="abs high">(84&nbsp;/&nbsp;85)</td>
-	<td data-value="94.34" class="pct high">94.34%</td>
-	<td data-value="53" class="abs high">(50&nbsp;/&nbsp;53)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="11" class="abs high">(11&nbsp;/&nbsp;11)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="83" class="abs high">(83&nbsp;/&nbsp;83)</td>
-	</tr>
+    <!-- Barra lateral de navegación -->
+    <nav class="sidebar">
+        <div class="logo-container">
+            <img src="assets/icon.png" alt="Nova Note Logo">
+        </div>
+        <button class="nav-btn active" onclick="switchSection('notes', event)" title="Notas">📝</button>
+        <button class="nav-btn" onclick="switchSection('calendar', event)" title="Calendario">📅</button>
+    </nav>
 
-<tr>
-	<td class="file high" data-value="streambuffer.js"><a href="streambuffer.js.html">streambuffer.js</a></td>
-	<td data-value="100" class="pic high"><span class="cover-fill cover-full" style="width: 100px;"></span><span class="cover-empty" style="width:0px;"></span></td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="3" class="abs high">(3&nbsp;/&nbsp;3)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="0" class="abs high">(0&nbsp;/&nbsp;0)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="0" class="abs high">(0&nbsp;/&nbsp;0)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="3" class="abs high">(3&nbsp;/&nbsp;3)</td>
-	</tr>
+    <!-- Contenedor principal -->
+    <div class="main-container">
+        <header>
+            <h1 id="header-title">Nova Note - Notas</h1>
+        </header>
 
-<tr>
-	<td class="file high" data-value="writable_streambuffer.js"><a href="writable_streambuffer.js.html">writable_streambuffer.js</a></td>
-	<td data-value="96.77" class="pic high"><span class="cover-fill" style="width: 96px;"></span><span class="cover-empty" style="width:4px;"></span></td>
-	<td data-value="96.77" class="pct high">96.77%</td>
-	<td data-value="62" class="abs high">(60&nbsp;/&nbsp;62)</td>
-	<td data-value="90.63" class="pct high">90.63%</td>
-	<td data-value="32" class="abs high">(29&nbsp;/&nbsp;32)</td>
-	<td data-value="100" class="pct high">100%</td>
-	<td data-value="9" class="abs high">(9&nbsp;/&nbsp;9)</td>
-	<td data-value="98.25" class="pct high">98.25%</td>
-	<td data-value="57" class="abs high">(56&nbsp;/&nbsp;57)</td>
-	</tr>
+        <div class="content-area">
+            
+            <!-- Sección Notas -->
+            <div id="notes-section" class="section active">
+                <div class="note-input-container">
+                    <input type="text" id="note-title" placeholder="Título de la nota...">
+                    <textarea id="note-content" placeholder="Escribe tu nota aquí..."></textarea>
+                    <button class="primary-btn" onclick="saveNote()">Guardar Nota</button>
+                </div>
+                <div class="notes-list" id="notes-list">
+                    <!-- Las notas se cargan dinámicamente aquí -->
+                </div>
+            </div>
 
-</tbody>
-</table>
-</div>
-</div>
-<div class="footer">
-    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Jul 01 2015 04:16:19 GMT+0000 (UTC)</div>
-</div>
-<script src="../prettify.js"></script>
-<script>
-window.onload = function () {
-        if (typeof prettyPrint === 'function') {
-            prettyPrint();
+            <!-- Sección Calendario -->
+            <div id="calendar-section" class="section">
+                <div class="calendar-view">
+                    <h2>Calendario y Tareas</h2>
+                    <p style="margin-top: 15px; color: var(--text-secondary);">Organiza tus pendientes y sincroniza tus jornadas sin conexión.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Funcionalidad de navegación entre secciones
+        function switchSection(sectionName, event) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (sectionName === 'notes') {
+                document.getElementById('notes-section').classList.add('active');
+                document.getElementById('header-title').innerText = 'Nova Note - Notas';
+            } else if (sectionName === 'calendar') {
+                document.getElementById('calendar-section').classList.add('active');
+                document.getElementById('header-title').innerText = 'Nova Note - Calendario';
+            }
+
+            event.currentTarget.classList.add('active');
         }
-};
-</script>
-<script src="../sorter.js"></script>
+
+        // Sistema de Notas con localStorage (100% offline)
+        document.addEventListener('DOMContentLoaded', loadNotes);
+
+        function saveNote() {
+            const titleInput = document.getElementById('note-title');
+            const contentInput = document.getElementById('note-content');
+            
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!title && !content) return;
+
+            const notes = JSON.parse(localStorage.getItem('nova_notes') || '[]');
+            const newNote = {
+                id: Date.now(),
+                title: title || 'Sin título',
+                content: content,
+                date: new Date().toLocaleDateString()
+            };
+
+            notes.unshift(newNote);
+            localStorage.setItem('nova_notes', JSON.stringify(notes));
+
+            titleInput.value = '';
+            contentInput.value = '';
+            loadNotes();
+        }
+
+        function loadNotes() {
+            const listContainer = document.getElementById('notes-list');
+            const notes = JSON.parse(localStorage.getItem('nova_notes') || '[]');
+            
+            listContainer.innerHTML = '';
+
+            if (notes.length === 0) {
+                listContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">No hay notas guardadas aún.</p>';
+                return;
+            }
+
+            notes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'note-card';
+                card.innerHTML = `
+                    <h3>${escapeHtml(note.title)}</h3>
+                    <p>${escapeHtml(note.content)}</p>
+                    <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px;">${note.date}</small>
+                    <button class="delete-btn" onclick="deleteNote(${note.id})">×</button>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        function deleteNote(id) {
+            let notes = JSON.parse(localStorage.getItem('nova_notes') || '[]');
+            notes = notes.filter(note => note.id !== id);
+            localStorage.setItem('nova_notes', JSON.stringify(notes));
+            loadNotes();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
 </body>
 </html>
